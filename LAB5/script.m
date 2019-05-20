@@ -7,11 +7,13 @@ contourOfAll = bwperim(allObjects, 8);
 %% recognize colors
 %cut out background of image
 noBackgroundRGBImage = bsxfun(@times, image, cast(allObjects,class(BW)));
+figure;
 imshow(noBackgroundRGBImage);
 lab_Image = rgb2lab(noBackgroundImage);
 LChannel = lab_Image(:, :, 1); 
 aChannel = lab_Image(:, :, 2); 
 bChannel = lab_Image(:, :, 3);
+figure;
 subplot(3, 1, 1);
 imshow(LChannel, []);
 title('L Channel', 'FontSize', 20);
@@ -21,7 +23,7 @@ title('a Channel', 'FontSize', 10);
 subplot(3, 1, 3);
 imshow(bChannel, []);
 title('b Channel', 'FontSize', 10);
-[LMean, aMean, bMean] = GetMeanLABValues(LChannel, aChannel, bChannel, allObjects);
+% [LMean, aMean, bMean] = GetMeanLABValues(LChannel, aChannel, bChannel, allObjects);
 
 % % ab_image = lab_image(:,:,2:3);
 % % ab_image = im2single(ab_image);
