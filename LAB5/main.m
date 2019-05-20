@@ -1,19 +1,14 @@
 % read in image
-clear all;
+clear ;
 image=imread('rozmyte.jpg');
 load('allObjectsMask.mat')
-test = 2;
 %% show binary contour mask of all
-%imshow(allObjectMask);
 % contour of all
 contourOfAll = bwperim(allObjectsMask, 8);
-figure;
-imshow(contourOfAll);
+
 %% recognize colors
-if test == 1
     %cut out background of image
     noBackgroundRGBImage = bsxfun(@times, image, cast(allObjectsMask,class(image)));
-    % imshow(noBackgroundRGBImage);
     lab_Image = rgb2lab(noBackgroundRGBImage);
     ab_image = lab_Image(:,:,2:3);
     ab_image = im2single(ab_image);
@@ -75,15 +70,6 @@ if test == 1
         DDDD = 1;
     end
 
-    %% find and mark contour of red circle
-    % x=637;
-    % y=806;
-    % contour = bwtraceboundary(contourOfAll,[x y],'W');
-    % figure;
-    % imshow(contourOfAll)
-    % hold on;
-    % plot(contour(:,2),contour(:,1),'g','LineWidth',2)
-
     %% finding single objects
 
     for k=1:length(coloredContours)
@@ -109,40 +95,32 @@ if test == 1
       plot(boundary(:,1), boundary(:,2),color,'LineWidth',2);
       hold on;
 
-    % %randomize text position for better visibility
-    %  rndRow = ceil(length(boundary)/(mod(rand*k,7)+1));
-    %  col = boundary(rndRow,2); row = boundary(rndRow,1);
-    %   h = text(col+1, row-1, num2str(L(row,col)));
-    %   set(h,'Color',colors(cidx),'FontSize',14,'FontWeight','bold');
     end
-end
 
 %% measuring objects
-if test ==2
+
     pause(0.1);
     L = bwlabel(contourOfAll);
     s = regionprops(L, 'Centroid');
-    figure;
-    imshow(image);
-    hold on;
-    % Show object numbers
-    for k = 1:numel(s)
-        c = s(k).Centroid;
-        text(c(1), c(2), sprintf('%d', k), ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle');
-    end
-    hold off;
-    pause(0.1);
-    % Step 3: find the area of the object you want using its label
-    % Area = zeros(1,numel(s));
+%     figure;
+%     imshow(image);
+%     hold on;
+%     % Show object numbers
+%     for k = 1:numel(s)
+%         c = s(k).Centroid;
+%         text(c(1), c(2), sprintf('%d', k), ...
+%             'HorizontalAlignment', 'center', ...
+%             'VerticalAlignment', 'middle');
+%     end
+%     hold off;
+
+%     pause(0.1);
     % figure;
     % for i=1:numel(s)
     %     Obj = (L == i);   % 1 is the label number of the first object. 
     % %     subplot(round(sqrt(numel(s))),round(sqrt(numel(s))),i);
     %     figure;imshow(Obj);
     %     title(strcat('Object nr ', num2str(i)));
-    % %     Area(i) = regionprops(Obj,'Area'); % the answer
     % end
     %% Scale object size (7.8 cm circle)
     Obj = (L == 27);   % 1 is the label number of the first object. 
@@ -150,19 +128,76 @@ if test ==2
     MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
     Scale = 7.8 / MajorAxisLength.MajorAxisLength;
 
-    figure;
-    imshow(image);
-    hold on;
+%     figure;
+%     imshow(image);
+%     hold on;
     ObjectSize=zeros(1,numel(s));
-    for k = 1:numel(s)
-        c = s(k).Centroid;
-        Obj = (L == k);
+    for i=1:numel(s)
+        Obj = (L == i);
         MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
-        ObjectSize(k) = MajorAxisLength.MajorAxisLength * Scale;
-        text(c(1), c(2), sprintf('%.2f cm', ObjectSize(k)), ...
-            'HorizontalAlignment', 'center', ...
-            'VerticalAlignment', 'middle');
+        ObjectSize(i) = MajorAxisLength.MajorAxisLength * Scale;
     end
-    hold off;
+%     for k = 1:numel(s)
+%         c = s(k).Centroid;
+%         Obj = (L == k);
+%         MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
+%         ObjectSize(k) = MajorAxisLength.MajorAxisLength * Scale;
+%         text(c(1), c(2), sprintf('%.2f cm', ObjectSize(k)), ...
+%             'HorizontalAlignment', 'center', ...
+%             'VerticalAlignment', 'middle');
+%     end
+%     hold off;
+    
+%% Classify objects
 
+cc = bwconncomp(allObjectsMask);
+
+[out,LM] = bwferet(cc,'MaxFeretProperties');
+
+maxLabel = max(LM(:));
+maxSize = out.MaxDiameter(1:maxLabel);
+
+[out,LM] = bwferet(cc,'MinFeretProperties');
+
+maxLabel = max(LM(:));
+minSize = out.MinDiameter(1:maxLabel);
+
+ObjectClass = cell(1, maxLabel);
+
+circle = 80;%
+pen = 20;%
+
+
+for i=1:maxLabel
+    rate = minSize(i)/maxSize(i) * 100;
+    if rate > circle
+        ObjectClass{i} = 'Magnes';
+    elseif rate < pen
+        ObjectClass{i} = 'Dlugopis';
+    else
+        ObjectClass{i} = 'Nieznany';
+    end
+        
 end
+
+pause(0.1);
+figure;
+imshow(image);
+hold on;
+% Show object classes
+for k = 1:numel(s)
+    c = s(k).Centroid;
+    if ObjectClass{k} == "Magnes"
+        sizeName = 'srednica';
+    elseif ObjectClass{k} == "Dlugopis"
+        sizeName = 'dlugosc';
+    else 
+        sizeName = 'rozmiar';
+    end
+        
+    text(c(1), c(2), sprintf('%s\n%s=%.2fcm', ObjectClass{k},...
+        sizeName,ObjectSize(k)), ...
+        'HorizontalAlignment', 'center', ...
+        'VerticalAlignment', 'middle');
+end
+hold off;
