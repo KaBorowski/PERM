@@ -7,95 +7,39 @@ load('allObjectsMask.mat')
 contourOfAll = bwperim(allObjectsMask, 8);
 
 %% recognize colors
-    %cut out background of image
-    noBackgroundRGBImage = bsxfun(@times, image, cast(allObjectsMask,class(image)));
-    lab_Image = rgb2lab(noBackgroundRGBImage);
-    ab_image = lab_Image(:,:,2:3);
-    ab_image = im2single(ab_image);
-    nColors = 6;
-    % repeat the clustering 3 times to avoid local minima
-    pixel_labels = imsegkmeans(ab_image,nColors,'NumAttempts',3);
+noBackgroundRGBImage = bsxfun(@times, image, cast(allObjectsMask,class(image)));
+[B,L] = bwboundaries(allObjectsMask, 'noholes');
+Obj = (L==33);
+PixelList = regionprops(Obj,'PixelList');
+PixelList = PixelList(1).PixelList;
 
-    mask1 = pixel_labels==1;
-    blackMaskRGB = noBackgroundRGBImage .* uint8(mask1);
-    blackMask = squeeze(blackMaskRGB(:,:,1));
-    blackMask = imbinarize(blackMask);
-    [blackB,blackL] = bwboundaries(blackMask);
-    blackB = removeHoles(blackB);
-    % figure;
-    % imshow(blackMask)
-    mask2 = pixel_labels==2;
-    redMaskRGB = noBackgroundRGBImage .* uint8(mask2);
-    redMask = squeeze(redMaskRGB(:,:,1));
-    redMask = imbinarize(redMask);
-    [redB,redL] = bwboundaries(redMask);
-    redB = removeHoles(redB);
-    % figure;
-    % imshow(redMask)
-    mask3 = pixel_labels==3;
-    greenMaskRGB = noBackgroundRGBImage .* uint8(mask3);
-    greenMask = squeeze(greenMaskRGB(:,:,1));
-    greenMask = imbinarize(greenMask);
-    [greenB,greenL] = bwboundaries(greenMask);
-    greenB = removeHoles(greenB);
-    % figure;
-    % imshow(greenMask)
-    mask4 = pixel_labels==4;
-    blueMaskRGB = noBackgroundRGBImage .* uint8(mask4);
-    blueMask = squeeze(blueMaskRGB(:,:,1));
-    blueMask = imbinarize(blueMask);
-    [blueB,blueL] = bwboundaries(blueMask);
-    blueB = removeHoles(blueB);
-    % figure;
-    % imshow(blueMask)
-    mask5 = pixel_labels==5;
-    yellowMaskRGB = noBackgroundRGBImage .* uint8(mask5);
-    yellowMask = squeeze(yellowMaskRGB(:,:,1));
-    yellowMask = imbinarize(yellowMask);
-    [yellowB,yellowL] = bwboundaries(yellowMask);
-    yellowB = removeHoles(yellowB);
-    % figure;
-    % imshow(yellowMask)
-    mask6 = pixel_labels==6;
-    whiteMaskRGB = noBackgroundRGBImage .* uint8(mask6);
-    whiteMask = squeeze(whiteMaskRGB(:,:,1));
-    whiteMask = imbinarize(whiteMask);
-    [whiteB,whiteL] = bwboundaries(whiteMask);
-    whiteB = removeHoles(whiteB);
-    % figure;
-    % imshow(whiteMask)
-    coloredContours = [blackB', redB', greenB', blueB', yellowB', whiteB']';
-    DDDD = 0;
-    if greenL == whiteL
-        DDDD = 1;
+ObjectColor = cell(1,numel(B));
+ObjectColor{1} = '';
+for i=2:33
+    Obj = (L==i);
+    PixelList = regionprops(Obj,'PixelList');
+    PixelList = PixelList(1).PixelList;
+    Z = PixelList(:,1);
+    C = PixelList(:,2);
+    meanR = mean(mean(image(C,Z,1)));
+    meanG = mean(mean(image(C,Z,2)));
+    meanB = mean(mean(image(C,Z,3)));
+    if meanR > 200 && meanG < 80 && meanB < 80
+        ObjectColor{i} = 'czerwony'; 
+    elseif meanR > 181 && meanG > 146 && meanB > 128
+        ObjectColor{i} = 'bialy';
+    elseif meanR > 200 && meanG > 100 && meanB < 100
+        ObjectColor{i} = 'zolty';
+    elseif meanR > 30 && meanG > 113 && meanB < 150
+        ObjectColor{i} = 'zielony';
+    elseif meanR < 130 && meanG < 111 && meanB > 100
+        ObjectColor{i} = 'niebieski'; 
+    elseif meanR < 100 && meanG < 100 && meanB < 100
+        ObjectColor{i} = 'czarny';  
+    else
+        ObjectColor{i} = 'nieznany';
     end
-
-    %% finding single objects
-
-    for k=1:length(coloredContours)
-      boundary = coloredContours{k};
-
-      color = 'black';
-      if k > length(blackB)
-          color = 'red';
-      end
-      if k > length(blackB) + length(redB)
-          color = 'green';
-      end
-      if k > length(blackB) + length(redB) + length(greenB)
-          color = 'blue';
-      end
-      if k > length(blackB) + length(redB) + length(greenB) + length(blueB)
-          color = 'yellow';
-      end
-      if k > length(blackB) + length(redB) + length(greenB) + length(blueB) + length(yellowB)
-          color = 'magenta';
-      end
-
-      plot(boundary(:,1), boundary(:,2),color,'LineWidth',2);
-      hold on;
-
-    end
+end
 
 %% measuring objects
 
@@ -195,7 +139,7 @@ for k = 1:numel(s)
         sizeName = 'rozmiar';
     end
         
-    text(c(1), c(2), sprintf('%s\n%s=%.2fcm', ObjectClass{k},...
+    text(c(1), c(2), sprintf('%s %s\n%s=%.2fcm', ObjectColor{k}, ObjectClass{k},...
         sizeName,ObjectSize(k)), ...
         'HorizontalAlignment', 'center', ...
         'VerticalAlignment', 'middle');
