@@ -32,13 +32,13 @@ for i=1:33
         ObjectColor{i} = 'czerwony'; 
     elseif meanR > 181 && meanG > 146 && meanB > 128
         ObjectColor{i} = 'bialy';
-    elseif meanR > 200 && meanG > 100 && meanB < 100
+    elseif meanR > 143 && meanG > 113 && meanB < 139
         ObjectColor{i} = 'zolty';
     elseif meanR > 30 && meanG > 113 && meanB < 150
         ObjectColor{i} = 'zielony';
     elseif meanR < 130 && meanG < 111 && meanB > 100
         ObjectColor{i} = 'niebieski'; 
-    elseif meanR < 100 && meanG < 100 && meanB < 100
+    elseif meanR < 149 && meanG < 138 && meanB < 122
         ObjectColor{i} = 'czarny';  
     else
         ObjectColor{i} = 'nieznany';
@@ -51,6 +51,6 @@ for i=1:33
     %disp([num2str(i),' | ',num2str(meanR),' | ', num2str(meanG),' | ', num2str(meanB),' | ', ObjectColor{i}])
 end
 disp('------------------------------------------------------------')
-for k = [5]
+for k = [16,20,30]
     disp([num2str(s(k).i),' | ',num2str(s(k).R),' | ',num2str(s(k).G),' | ',num2str(s(k).B),' | ',s(k).color]);
 end
