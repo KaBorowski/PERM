@@ -28,7 +28,7 @@ for i=1:33
     meanR = mean(mean(image(C,Z,1)));
     meanG = mean(mean(image(C,Z,2)));
     meanB = mean(mean(image(C,Z,3)));
-    if meanR > 200 && meanG < 80 && meanB < 80
+    if meanR > 160 && meanG < 137 && meanB < 118
         ObjectColor{i} = 'czerwony'; 
     elseif meanR > 181 && meanG > 146 && meanB > 128
         ObjectColor{i} = 'bialy';
@@ -48,9 +48,9 @@ for i=1:33
     s(i).G = meanG;
     s(i).B = meanB;
     s(i).color = ObjectColor{i};
-    %disp([num2str(i),' | ',num2str(meanR),' | ', num2str(meanG),' | ', num2str(meanB),' | ', ObjectColor{i}])
+    disp([num2str(i),' | ',num2str(meanR),' | ', num2str(meanG),' | ', num2str(meanB),' | ', ObjectColor{i}])
 end
-disp('------------------------------------------------------------')
-for k = [16,20,30]
-    disp([num2str(s(k).i),' | ',num2str(s(k).R),' | ',num2str(s(k).G),' | ',num2str(s(k).B),' | ',s(k).color]);
-end
+% disp('------------------------------------------------------------')
+% for k = [6,7,14,19,27,28]
+%     disp([num2str(s(k).i),' | ',num2str(s(k).R),' | ',num2str(s(k).G),' | ',num2str(s(k).B),' | ',s(k).color]);
+% end

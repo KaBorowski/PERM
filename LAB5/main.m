@@ -151,9 +151,9 @@ hold on;
 % Show object classes
 for k = ObjectIndex
     c = s(k).Centroid;
-    if ObjectClass{k} == "Magnes"
+    if ObjectClass{k} == string('Magnes')
         sizeName = 'srednica';
-    elseif ObjectClass{k} == "Dlugopis"
+    elseif ObjectClass{k} == string('Dlugopis')
         sizeName = 'dlugosc';
     else 
         sizeName = 'rozmiar';
