@@ -1,11 +1,13 @@
 % read in image
 clear ;
 image=imread('rozmyte.jpg');
-load('allObjectsMask.mat')
+load('allObjectsMask.mat');
+imtool(image);
 %% show binary contour mask of all
 % contour of all
 contourOfAll = bwperim(allObjectsMask, 8);
-
+figure;
+imshow(contourOfAll);
 %% recognize colors
 noBackgroundRGBImage = bsxfun(@times, image, cast(allObjectsMask,class(image)));
 [B,L] = bwboundaries(allObjectsMask, 'noholes');
@@ -60,27 +62,32 @@ end
 
 %     pause(0.1);
     % figure;
-    % for i=1:numel(s)
-    %     Obj = (L == i);   % 1 is the label number of the first object. 
-    % %     subplot(round(sqrt(numel(s))),round(sqrt(numel(s))),i);
-    %     figure;imshow(Obj);
-    %     title(strcat('Object nr ', num2str(i)));
-    % end
+    ObjectIndex = [];
+    minPixels = 20;
+    for i=1:numel(s)
+        Obj = (L == i);  
+        Area = regionprops(Obj, 'Area');
+        if Area.Area > minPixels
+            ObjectIndex = [ObjectIndex, i];
+            Orientation(i) = regionprops(Obj, 'Orientation');
+        end      
+    end
     %% Scale object size (7.8 cm circle)
-    Obj = (L == 27);   % 1 is the label number of the first object. 
-    % Circularity = regionprops(Obj, 'Circularity');
-    MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
-    Scale = 7.8 / MajorAxisLength.MajorAxisLength;
+%     Obj = (L == 27);   % 1 is the label number of the first object. 
+%     % Circularity = regionprops(Obj, 'Circularity');
+%     MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
+%     Scale = 7.8 / MajorAxisLength.MajorAxisLength;
 
 %     figure;
 %     imshow(image);
 %     hold on;
-    ObjectSize=zeros(1,numel(s));
-    for i=1:numel(s)
-        Obj = (L == i);
-        MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
-        ObjectSize(i) = MajorAxisLength.MajorAxisLength * Scale;
-    end
+%% Object size version 1.0
+%     ObjectSize=zeros(1,numel(s));
+%     for i=1:numel(s)
+%         Obj = (L == i);
+%         MajorAxisLength = regionprops(Obj, 'MajorAxisLength');
+%         ObjectSize(i) = MajorAxisLength.MajorAxisLength * Scale;
+%     end
 %     for k = 1:numel(s)
 %         c = s(k).Centroid;
 %         Obj = (L == k);
@@ -101,10 +108,23 @@ cc = bwconncomp(allObjectsMask);
 maxLabel = max(LM(:));
 maxSize = out.MaxDiameter(1:maxLabel);
 
+
 [out,LM] = bwferet(cc,'MinFeretProperties');
 
 maxLabel = max(LM(:));
 minSize = out.MinDiameter(1:maxLabel);
+
+
+
+%% Object size version 2.0 with Scale
+Scale = 7.8/maxSize(27);
+ObjectSize=zeros(1,numel(s));
+for i = 1:numel(s)
+    ObjectSize(i) = Scale * maxSize(i);
+end
+
+
+%% ... Classify objects 
 
 ObjectClass = cell(1, maxLabel);
 
@@ -129,7 +149,7 @@ figure;
 imshow(image);
 hold on;
 % Show object classes
-for k = 1:numel(s)
+for k = ObjectIndex
     c = s(k).Centroid;
     if ObjectClass{k} == "Magnes"
         sizeName = 'srednica';
